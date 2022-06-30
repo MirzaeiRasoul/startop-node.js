@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
-const secretKey = 'hgjffkhfkah';
-const expiryTime = 30; // Seconds
+const secretKey = 'hg(#@24ed4r43#@r3ff33#@r3ff3h7H&*h7H&*v6vv3#@r3ff3h7H&*66f5rcrs43^#&Z^';
+const expiryTime = 60; // Seconds
+const tokenName = 'auth-token';
 
 const verifyUser = (user) => {
     if (user.username == 'rasoul') {
@@ -12,36 +13,30 @@ const verifyUser = (user) => {
 const createToken = async (req, res) => {
     const user = req.body.user;
     if (verifyUser(user)) {
-        const token = await jwt.sign({ user }, secretKey, { expiresIn: expiryTime });
-        res.cookie('Token', token, {
+        const username = user.username;
+        const token = await jwt.sign({ username }, secretKey, { expiresIn: expiryTime });
+        res.cookie(tokenName, token, {
             expires: new Date(new Date().getTime() + expiryTime * 1000),
             sameSite: 'strict',
             httpOnly: true,
         });
-        return token;
+        return 'ورود با موفقیت انجام شد.';
+    } else {
+        throw new Error('نام کاربری یا رمز عبور وارد شده صحیح نمی‌باشد.');
     }
-    throw new Error('نام کاربری یا رمز عبور اشتباه است. لطفا دوباره امتحان کنید.');
 }
 
 const verifyToken = async (req, res, next) => {
-    const bearerHeader = req.headers['authorization'];
-    console.log(req.cookies);
-    if (typeof bearerHeader !== 'undefined') {
-        const bearer = bearerHeader.split(' ');
-        try {
-            const authData = await jwt.verify(bearer[1], secretKey);
-            req.authData = authData;
-            next();
-        } catch (err) {
-            res.status(403).json({
-                status: 403, // Forbidden
-                message: 'شناسه کاربری وارد شده معتبر نیست. لطفا وارد حساب کاربری خود شوید.',
-            });
-        }
-    } else {
+    try {
+        const token = req.cookies[tokenName];
+        const authData = await jwt.verify(token, secretKey);
+        req.authData = authData;
+        next();
+    } catch (err) {
+        res.clearCookie(tokenName);
         res.status(401).json({
             status: 401, // Unauthorized
-            message: 'برای دسترسی به اطلاعات ابتدا وارد حساب کاربری خود شوید.',
+            message: 'شناسه کاربری وارد شده معتبر نیست. لطفا وارد حساب کاربری خود شوید.',
         });
     }
 }
