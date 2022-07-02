@@ -44,13 +44,11 @@ router.get('/profile/', auth.verifyToken, (req, res) => {
 });
 
 router.get('/search/', async (req, res) => {
-    // If verifyToken is passed ...
     const startops = await db.getAllStartops();
     res.status(200).json(startops);
 });
 
 router.get('/search/:query', async (req, res) => {
-    // If verifyToken is passed ...
     const startops = await db.searchStartop(req.params.query);
     res.status(200).json(startops);
 });
