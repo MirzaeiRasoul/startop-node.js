@@ -1,20 +1,25 @@
 const express = require('express');
-const cors = require('cors');
+const moragn = require('morgan');
 const cookieParser = require('cookie-parser');
 
+const authRouter = require('./routes/auth.routes');
+const searchRouter = require('./routes/search.routes');
+
 const app = express();
-const port = 5000;
+const port = 3001;
+
+app.use(moragn('dev'));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-app.use(cors({
-    credentials: true,
-    origin: 'http://localhost:3000',
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-}));
-
 app.use(cookieParser());
+
+app.use('/api/auth', authRouter);
+app.use('/api/search', searchRouter);
+
+app.get('/', (req, res) => {
+    return res.status(200).json('Hello World!');
+});
 
 app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`)
