@@ -14,8 +14,4 @@ const searchStartup = (query) => {
     return knex('api_startop').where('title', 'like', `%${query}%`).orWhere('description', 'like', `%${query}%`);
 }
 
-module.exports = {
-    getAllStartups,
-    getStartup,
-    searchStartup
-};
+module.exports = { getAllStartups, getStartup, searchStartup };

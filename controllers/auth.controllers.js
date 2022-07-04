@@ -7,15 +7,19 @@ const login = async (req, res) => {
     if (!username || !password) return res.status(400).json({ message: 'لطفا نام کاربری و رمز عبور خود را وارد کنید.' });
 
     if (auth.verifyUser(username, password)) {
-        //use the payload to store information about the user such as username, user role, etc.
-        const payload = { username: username };
-        //create the access token with the shorter lifespan
-        const accessToken = await jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { algorithm: "HS256", expiresIn: process.env.ACCESS_TOKEN_LIFE });
-        //create the refresh token with the longer lifespan
-        const refreshToken = await jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, { algorithm: "HS256", expiresIn: process.env.REFRESH_TOKEN_LIFE });
+        // create the access token with the shorter lifespan
+        // store information about the user such as username, user role, etc.
+        const iatAccess = new Date().getTime();
+        const accessPayload = { username, iatAccess };
+        const accessToken = await jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: parseInt(process.env.ACCESS_TOKEN_LIFE) });
+
+        // create the refresh token with the longer lifespan
+        const iatRefresh = new Date().getTime();
+        const refreshPayload = { username, iatRefresh };
+        const refreshToken = await jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: parseInt(process.env.REFRESH_TOKEN_LIFE) });
 
         res.cookie(process.env.REFRESH_TOKEN_NAME, refreshToken, {
-            expires: new Date(new Date().getTime() + process.env.REFRESH_TOKEN_LIFE * 1000),
+            expires: new Date(new Date().getTime() + parseInt(process.env.REFRESH_TOKEN_LIFE) * 1000),
             sameSite: 'strict',
             httpOnly: true,
             secure: true
@@ -38,12 +42,18 @@ const refresh = async (req, res) => {
 
     try {
         const authPayload = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-        const payload = { username: authPayload.username };
-        const newAccessToken = await jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { algorithm: "HS256", expiresIn: process.env.ACCESS_TOKEN_LIFE });
-        const newRefreshToken = await jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, { algorithm: "HS256", expiresIn: process.env.REFRESH_TOKEN_LIFE });
+        const username = authPayload.username;
+
+        const iatAccess = new Date().getTime();
+        const accessPayload = { username, iatAccess };
+        const newAccessToken = await jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: parseInt(process.env.ACCESS_TOKEN_LIFE) });
+
+        const iatRefresh = new Date().getTime();
+        const refreshPayload = { username, iatRefresh };
+        const newRefreshToken = await jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: parseInt(process.env.REFRESH_TOKEN_LIFE) });
 
         res.cookie(process.env.REFRESH_TOKEN_NAME, newRefreshToken, {
-            expires: new Date(new Date().getTime() + process.env.REFRESH_TOKEN_LIFE * 1000),
+            expires: new Date(new Date().getTime() + parseInt(process.env.REFRESH_TOKEN_LIFE) * 1000),
             sameSite: 'strict',
             httpOnly: true,
             secure: true
@@ -61,9 +71,4 @@ const profile = (req, res) => {
     return res.status(200).json({ username });
 };
 
-module.exports = {
-    login,
-    logout,
-    refresh,
-    profile
-};
+module.exports = { login, logout, refresh, profile };

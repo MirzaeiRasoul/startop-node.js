@@ -10,7 +10,4 @@ const querySearch = async (req, res) => {
     return res.status(200).json({ startups });
 };
 
-module.exports = {
-    rootSearch,
-    querySearch
-};
+module.exports = { rootSearch, querySearch };
