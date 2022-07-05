@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const verifyAuth = async (req, res, next) => {
-    const accessToken = req.header('x-access-token');
+    const accessToken = req.header('X-Access-Token');
     if (!accessToken) return res.status(403).json({ message: 'لطفا وارد حساب کاربری خود شوید.' });
 
     try {

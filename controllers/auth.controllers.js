@@ -2,6 +2,11 @@ const jwt = require('jsonwebtoken');
 const auth = require('../utils/auth.utils');
 require('dotenv').config();
 
+const csrf = (req, res) => {
+    const csrfToken = req.csrfToken();
+    return res.status(200).json({ csrfToken });
+};
+
 const login = async (req, res) => {
     const username = req.body.username, password = req.body.password;
     if (!username || !password) return res.status(400).json({ message: 'لطفا نام کاربری و رمز عبور خود را وارد کنید.' });
@@ -11,12 +16,16 @@ const login = async (req, res) => {
         // store information about the user such as username, user role, etc.
         const iatAccess = new Date().getTime();
         const accessPayload = { username, iatAccess };
-        const accessToken = await jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: parseInt(process.env.ACCESS_TOKEN_LIFE) });
+        const accessToken = await jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: parseInt(process.env.ACCESS_TOKEN_LIFE)
+        });
 
         // create the refresh token with the longer lifespan
         const iatRefresh = new Date().getTime();
         const refreshPayload = { username, iatRefresh };
-        const refreshToken = await jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: parseInt(process.env.REFRESH_TOKEN_LIFE) });
+        const refreshToken = await jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, {
+            expiresIn: parseInt(process.env.REFRESH_TOKEN_LIFE)
+        });
 
         res.cookie(process.env.REFRESH_TOKEN_NAME, refreshToken, {
             expires: new Date(new Date().getTime() + parseInt(process.env.REFRESH_TOKEN_LIFE) * 1000),
@@ -71,4 +80,4 @@ const profile = (req, res) => {
     return res.status(200).json({ username });
 };
 
-module.exports = { login, logout, refresh, profile };
+module.exports = { csrf, login, logout, refresh, profile };

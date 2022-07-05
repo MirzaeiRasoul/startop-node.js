@@ -1,5 +1,4 @@
 # Node.js Best Practices
-
 This project is created for test and run best practices hello world.
 
 ## Http Status

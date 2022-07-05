@@ -1,6 +1,7 @@
 const express = require('express');
-const moragn = require('morgan');
 const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
+const moragn = require('morgan');
 
 const authRouter = require('./routes/auth.routes');
 const searchRouter = require('./routes/search.routes');
@@ -8,11 +9,18 @@ const searchRouter = require('./routes/search.routes');
 const app = express();
 const port = 3001;
 
-app.use(moragn('dev'));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(csrf({
+    cookie: {
+        sameSite: 'strict',
+        httpOnly: true,
+        secure: true,
+        maxAge: 3600 // 1-hour
+    }
+}));
+app.use(moragn('dev'));
 
 app.use('/api/auth', authRouter);
 app.use('/api/search', searchRouter);
