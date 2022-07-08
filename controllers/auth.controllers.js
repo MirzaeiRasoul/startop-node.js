@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const auth = require('../utils/auth.utils');
-require('dotenv').config();
 
 const csrf = (req, res) => {
     const csrfToken = req.csrfToken();
@@ -12,30 +11,10 @@ const login = async (req, res) => {
     if (!username || !password) return res.status(400).json({ message: 'لطفا نام کاربری و رمز عبور خود را وارد کنید.' });
 
     if (auth.verifyUser(username, password)) {
-        // create the access token with the shorter lifespan
-        // store information about the user such as username, user role, etc.
-        const iatAccess = new Date().getTime();
-        const accessPayload = { username, iatAccess };
-        const accessToken = await jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, {
-            expiresIn: parseInt(process.env.ACCESS_TOKEN_LIFE)
-        });
-
-        // create the refresh token with the longer lifespan
-        const iatRefresh = new Date().getTime();
-        const refreshPayload = { username, iatRefresh };
-        const refreshToken = await jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, {
-            expiresIn: parseInt(process.env.REFRESH_TOKEN_LIFE)
-        });
-
-        res.cookie(process.env.REFRESH_TOKEN_NAME, refreshToken, {
-            expires: new Date(new Date().getTime() + parseInt(process.env.REFRESH_TOKEN_LIFE) * 1000),
-            sameSite: 'strict',
-            httpOnly: true,
-            secure: true
-        });
-
+        const accessToken = await auth.generateTokens(res, username);
         return res.status(200).json({ accessToken });
     } else {
+        res.clearCookie(process.env.REFRESH_TOKEN_NAME);
         return res.status(400).json({ message: 'نام کاربری یا رمز عبور وارد شده صحیح نمی‌باشد.' });
     }
 };
@@ -50,33 +29,19 @@ const refresh = async (req, res) => {
     if (!refreshToken) return res.status(403).json({ message: 'لطفا وارد حساب کاربری خود شوید.' });
 
     try {
-        const authPayload = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-        const username = authPayload.username;
+        const refreshPayload = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const username = refreshPayload.username;
 
-        const iatAccess = new Date().getTime();
-        const accessPayload = { username, iatAccess };
-        const newAccessToken = await jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: parseInt(process.env.ACCESS_TOKEN_LIFE) });
-
-        const iatRefresh = new Date().getTime();
-        const refreshPayload = { username, iatRefresh };
-        const newRefreshToken = await jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: parseInt(process.env.REFRESH_TOKEN_LIFE) });
-
-        res.cookie(process.env.REFRESH_TOKEN_NAME, newRefreshToken, {
-            expires: new Date(new Date().getTime() + parseInt(process.env.REFRESH_TOKEN_LIFE) * 1000),
-            sameSite: 'strict',
-            httpOnly: true,
-            secure: true
-        });
-
-        return res.status(200).json({ accessToken: newAccessToken });
+        const accessToken = await auth.generateTokens(res, username);
+        return res.status(200).json({ accessToken });
     } catch (err) {
         res.clearCookie(process.env.REFRESH_TOKEN_NAME);
-        return res.status(401).json({ message: 'شناسه کاربری وارد شده معتبر نیست. لطفا وارد حساب کاربری خود شوید.' });
+        return res.status(401).json({ message: 'شناسه کاربری شما معتبر نیست. لطفا وارد حساب کاربری خود شوید.' });
     }
 };
 
 const profile = (req, res) => {
-    const username = req.authPayload.username;
+    const username = req.accessPayload.username;
     return res.status(200).json({ username });
 };
 

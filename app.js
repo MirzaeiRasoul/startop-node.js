@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const csrf = require('csurf');
@@ -14,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(csrf({
     cookie: {
+        key: 'csrf-token',
         sameSite: 'strict',
         httpOnly: true,
         secure: true,
