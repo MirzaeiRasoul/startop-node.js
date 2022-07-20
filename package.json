@@ -17,6 +17,7 @@
     "jsonwebtoken": "^8.5.1",
     "knex": "^2.1.0",
     "morgan": "^1.10.0",
-    "sqlite3": "^5.0.8"
+    "nodemon": "^2.0.19",
+    "sqlite3": "^5.0.9"
   }
 }
